@@ -1,0 +1,24 @@
+# Build artifacts
+/build/
+/dist/
+/bin/
+
+# Local research
+/.research/
+
+# Logs
+*.log
+
+# Go test / coverage
+*.out
+*.test
+*.cover
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# Env
+.env
+.env.*

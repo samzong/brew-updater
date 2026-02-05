@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+          cache-dependency-path: |
+            go.sum
+            go.mod
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: go
+          queries: security-and-quality
+
+      - name: Run quality checks
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: latest
+          args: --timeout=10m --skip-dirs=vendor --skip-files=".*\\.pb\\.go$"
+          only-new-issues: true
+
+      - name: Run unit tests
+        run: make test
+        env:
+          CGO_ENABLED: 0
+
+      - name: Run GoReleaser dry-run
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: "~> v2"
+          args: release --snapshot --skip=publish --skip=sign --skip=announce --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3

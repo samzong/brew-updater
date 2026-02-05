@@ -1,0 +1,98 @@
+version: 2
+
+env:
+  - RELEASE_OWNER=samzong
+  - PROJECT_DESCRIPTION=Aggressive Homebrew updater for macOS
+  - HOMEBREW_TAP_NAME=homebrew-tap
+  - HOMEBREW_BRANCH=main
+
+project_name: brew-updater
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: brew-updater
+    main: ./cmd/brew-updater
+    binary: brew-updater
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.buildTime={{.Date}}
+
+archives:
+  - id: default
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    files:
+      - README.md
+      - LICENSE
+
+checksum:
+  name_template: "checksums.txt"
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^ci:"
+      - "^chore:"
+      - "^style:"
+      - Merge pull request
+      - Merge branch
+
+release:
+  github:
+    owner: "{{ .Env.RELEASE_OWNER }}"
+    name: "{{ .ProjectName }}"
+  draft: false
+  prerelease: auto
+  mode: replace
+  replace_existing_artifacts: true
+  header: |
+    ## What's Changed
+  footer: |
+    **Full Changelog**: https://github.com/{{ .Env.RELEASE_OWNER }}/{{ .ProjectName }}/compare/{{ .PreviousTag }}...{{ .Tag }}
+
+brews:
+  - name: brew-updater
+    repository:
+      owner: "{{ .Env.RELEASE_OWNER }}"
+      name: "{{ .Env.HOMEBREW_TAP_NAME }}"
+      branch: "update-{{ .ProjectName }}-{{ .Tag }}"
+      pull_request:
+        enabled: true
+        base:
+          branch: "{{ .Env.HOMEBREW_BRANCH }}"
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    homepage: "https://github.com/{{ .Env.RELEASE_OWNER }}/{{ .ProjectName }}"
+    description: "{{ .Env.PROJECT_DESCRIPTION }}"
+    license: "MIT"
+    url_template: "https://github.com/{{ .Env.RELEASE_OWNER }}/{{ .ProjectName }}/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+    commit_author:
+      name: github-actions[bot]
+      email: 41898282+github-actions[bot]@users.noreply.github.com
+    test: |
+      system "#{bin}/brew-updater", "--help"
+    install: |
+      bin.install "brew-updater"
+    skip_upload: false
