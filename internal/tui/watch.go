@@ -80,8 +80,7 @@ func newModel(items []Item, defaultPolicy string, defaultInterval int, preset ma
 		defaultInterval: defaultInterval,
 		cancelled:       false,
 	}
-	for name, sel := range preset {
-		key := selectionKey(name, sel.Type)
+	for key, sel := range preset {
 		m.selected[key] = true
 		if sel.Policy != "" {
 			m.policy[key] = sel.Policy
@@ -307,7 +306,7 @@ func (m *model) toggleAll() {
 	if m.allSelected() {
 		for _, idx := range m.filtered() {
 			item := m.items[idx]
-			m.selected[item.Name] = false
+			m.selected[itemKey(item)] = false
 		}
 		return
 	}

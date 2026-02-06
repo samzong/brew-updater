@@ -118,15 +118,11 @@ func watchCmd() *cobra.Command {
 					items = append(items, tui.Item{Name: name, Type: "cask"})
 				}
 			} else {
-				merged := map[string]tui.Item{}
 				for name := range formulae {
-					merged[name] = tui.Item{Name: name, Type: "formula"}
+					items = append(items, tui.Item{Name: name, Type: "formula"})
 				}
 				for name := range casks {
-					merged[name] = tui.Item{Name: name, Type: "cask"}
-				}
-				for _, item := range merged {
-					items = append(items, item)
+					items = append(items, tui.Item{Name: name, Type: "cask"})
 				}
 			}
 
