@@ -186,7 +186,7 @@ func Run(ctx context.Context, cfg config.Config, st config.State, opts Options) 
 
 	st.LastUpdateAt = ptrTime(time.Now())
 	st.LastCheckAt = ptrTime(time.Now())
-	notifyUpdates(cfg, outdated, "Updated", false)
+	notifyUpdates(cfg, res.Outdated, "Updated", false)
 
 	return res, cfg, st, nil
 }
